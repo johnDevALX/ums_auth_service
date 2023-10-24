@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.ekene.model.UserData;
 import net.ekene.payload.AuthPayload;
+import net.ekene.payload.EmailPayload;
 import net.ekene.payload.UserDataDto;
 import net.ekene.response.UserResponseVO;
 import net.ekene.ums_auth_service.config.security.jwt.JwtUtil;
+import net.ekene.ums_auth_service.publisher.RabbitMqProducer;
 import net.ekene.ums_auth_service.repository.UserDataRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +25,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final RabbitMqProducer rabbitMqProducer;
 
 
     @Override
@@ -36,6 +39,8 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         UserData userData1 = userDataRepository.save(user);
+        EmailPayload emailPayload = new EmailPayload();
+        rabbitMqProducer.sendMessage(emailPayload.returnEmailPayload(userData1));
         return userData1.returnResponse();
     }
 
